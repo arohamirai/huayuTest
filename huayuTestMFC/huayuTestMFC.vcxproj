@@ -97,7 +97,7 @@
     <None Include="ReadMe.txt" />
     <None Include="res\huayuTestMFC.ico" />
     <None Include="res\huayuTestMFC.rc2" />
-    <None Include="res\icon1.ico" />
+    <None Include="华宇经编二期系统.bmp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="huayuTestMFC.h" />
