@@ -20,6 +20,7 @@
 ChuayuTestMFCDlg::ChuayuTestMFCDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(ChuayuTestMFCDlg::IDD, pParent)
 {
+	//
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
@@ -98,6 +99,22 @@ HCURSOR ChuayuTestMFCDlg::OnQueryDragIcon()
 
 void ChuayuTestMFCDlg::OnBnClickedOk()
 {
-	// TODO: ÔÚ´ËÌí¼Ó¿Ø¼þÍ¨Öª´¦Àí³ÌÐò´úÂë
+	// TODO: 
+
+	LPCTSTR lpApplicationName= _T("C://Users//lenovo//Documents//Visual Studio 2010//Projects//huayuTestMFC//Debug//huayuTestConsole.exe");
+	LPTSTR  lpCommandLine = _T(" huayuTest");
+
+	STARTUPINFO si = { sizeof(si) };
+	PROCESS_INFORMATION pi;
+	BOOL flag = CreateProcess(lpApplicationName,lpCommandLine,NULL,NULL,FALSE,NULL,NULL,NULL,&si,&pi);
+	if (!flag)
+	{
+		MessageBox(_T("启动图像计算程序失败！"));
+		return;
+	}
+	
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+
 	CDialogEx::OnOK();
 }
