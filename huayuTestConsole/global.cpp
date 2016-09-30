@@ -16,3 +16,12 @@
 //	}
 //	return (FALSE); // FALSE 表示我没有处理这个消息
 //}
+
+
+
+unsigned int  WINAPI threadProc(PVOID pParam)	//线程函数
+{
+	return 0;
+}
+
+

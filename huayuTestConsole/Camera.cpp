@@ -4,7 +4,6 @@ using namespace FlyCapture2;
 
 CCamera::CCamera(void)
 {
-	m_machine = 0;
 }
 
 
@@ -37,26 +36,88 @@ int CCamera::setParam(CDbase* pDbase)
 	return 0;
 }
 
-
-int CCamera::identifyCamera(void)
+int CCamera::Connect( PGRGuid* pGuid )
 {
-	BusManager busManger;
-	unsigned int NumofCameras;
-	FlyCapture2::Error e;
-
-	e = busManger.GetNumOfCameras(&NumofCameras);
-	if (e != PGRERROR_OK)		
-	{
-		transErrorInfo(e);
-		return CAM_ERROR;
-	}
-
-
-
-
-
 	return 0;
 }
+int CCamera::Disconnect()
+{
+	return 0;
+}
+bool CCamera::IsConnected()
+{
+	return 0;
+}
+int CCamera::SetCallback(ImageEventCallback callbackFn,const void* pCallbackData )
+{
+	return 0;
+}
+
+int CCamera::StartCapture(ImageEventCallback callbackFn,const void* pCallbackData )
+{
+	return 0;
+}
+int CCamera::StartSyncCapture(unsigned int numCameras,const Camera **ppCameras,const ImageEventCallback *pCallbackFns,const void** pCallbackDataArray)
+{
+	return 0;
+}
+int CCamera::RetrieveBuffer( Image* pImage )
+{
+	return 0;
+}
+int CCamera::StopCapture()
+{
+	return 0;
+}
+
+int CCamera::GetStats( CameraStats* pStats )
+{
+	return 0;
+}
+int CCamera::ResetStats()
+{
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//int CCamera::identifyCamera(void)
+//{
+//	BusManager busManger;
+//	unsigned int NumofCameras;
+//	FlyCapture2::Error e;
+//
+//	e = busManger.GetNumOfCameras(&NumofCameras);
+//	if (e != PGRERROR_OK)		
+//	{
+//		transErrorInfo(e);
+//		return CAM_ERROR;
+//	}
+//
+//
+//
+//
+//
+//	return 0;
+//}
 
 
 void CCamera::transErrorInfo(FlyCapture2::Error &e)
@@ -74,3 +135,4 @@ CString CCamera::getLastErrorInfo()
 {
 	return m_errorInfo;
 }
+

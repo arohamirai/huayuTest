@@ -19,7 +19,7 @@ public:
 
 	_RecordsetPtr readBySet(CString strSQL);
 	template <typename T> int modifyBySet(CString strSQL, CString field, T _value);
-	_ConnectionPtr connectDB(CString strConn);
+	_ConnectionPtr connectDB(CString strConn = _T("Driver={SQL Server};Server=LENOVO-PC01;Database=huayuTest;UID=sa;PWD=AISINIWDLFT"));
 	int disConnectDB(void);
 
 	CString getLastErrorInfo();

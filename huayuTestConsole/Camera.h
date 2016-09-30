@@ -2,7 +2,7 @@
 #include "atlstr.h"
 #include "Dbase.h"
 #include "FlyCapture2.h"
-
+using namespace FlyCapture2;
 #define	CAM_ERROR	-1
 #define	CAM_OK		0
 
@@ -20,37 +20,29 @@ public:
 public:
 	int getParam(CDbase* pDbase);
 	int setParam(CDbase* pDbase);
+	int isCameraControlable(PGRGuid *pGRGuid, bool *controlable);
+
+	virtual int Connect( PGRGuid* pGuid = NULL );
+	virtual int Disconnect();
+	virtual bool IsConnected();
+	virtual int SetCallback(ImageEventCallback callbackFn,const void* pCallbackData = NULL );
+	
+	virtual int StartCapture(ImageEventCallback callbackFn = NULL,const void* pCallbackData = NULL );
+	static int StartSyncCapture(unsigned int numCameras,const Camera **ppCameras,const ImageEventCallback *pCallbackFns = NULL,const void** pCallbackDataArray = NULL );
+	virtual int RetrieveBuffer( Image* pImage );
+	virtual int StopCapture();
+
+	virtual int GetStats( CameraStats* pStats );
+	virtual int ResetStats();
+
 
 public:
 	CString getLastErrorInfo();
-
 private:
 	void transErrorInfo(FlyCapture2::Error &e);
-//	//相机参数设置
-//public:
-//	int setBrightness(double _value);
-//	int setExposure(double _value);
-//	int setSharpness(int _value);
-//	int setShutter(double _value);
-//	int setGain(double _value);
 
-private:
-	int m_machineID;
-	IN_ADDR m_IP;					//相机IP地址
-
-//private:
-//	CString m_serialNumber;			//相机串号
-//	CString m_model;				//相机所属系列
-//	float	m_brightness;			//亮度
-//	float	m_exposure;				//曝光
-//	int		m_sharpness;			//锐度
-//
-//	float	m_shutter;				//
-//	float	m_gain;					//增益
-
-	FlyCapture2::CameraInfo camInfo;
 public:
-	int identifyCamera(void);
+	FlyCapture2::CameraInfo m_camInfo;
 
 private:
 	CString m_errorInfo;

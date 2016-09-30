@@ -51,6 +51,9 @@
     <ClCompile Include="Machine.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="BusManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ExceptionThread.h">
@@ -81,6 +84,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Machine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="BusManager.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

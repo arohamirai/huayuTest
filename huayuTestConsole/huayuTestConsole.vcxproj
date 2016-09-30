@@ -138,6 +138,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AnsicUnicode.cpp" />
+    <ClCompile Include="BusManager.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Dbase.cpp" />
     <ClCompile Include="ExceptionThread.cpp" />
@@ -151,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnsicUnicode.h" />
+    <ClInclude Include="BusManager.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Dbase.h" />
     <ClInclude Include="ExceptionThread.h" />

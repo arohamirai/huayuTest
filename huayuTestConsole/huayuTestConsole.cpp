@@ -1,6 +1,5 @@
-
-#include "MyServer.h"
 #include "iostream"
+#include "MyServer.h"
 #include "IoControler.h"
 #include "Camera.h"
 #include "ProcessThread.h"
@@ -8,6 +7,7 @@
 #include "tchar.h"
 #include "AnsicUnicode.h"
 #include "Machine.h"
+#include "BusManager.h"
 
 #include "FlyCapture2.h"
 #include "opencv2/opencv.hpp"
@@ -16,15 +16,12 @@ using namespace std;
 using namespace FlyCapture2;
 
 
-#define	TOTAL_MACHINE				10
-#define LINEMODULES_PER_MACHINE		2
-#define	CAMERAS_PER_LINEARMODULE	2
+//#define	TOTAL_MACHINE				10
 
+HANDLE *g_pEventHandle ;	//事件句柄，用于直线模组上相机的同步
+BOOL *g_work;				//模组工作标志位
 
-HANDLE *g_pEventHandle = new HANDLE[TOTAL_MACHINE * LINEMODULES_PER_MACHINE];	//事件句柄，用于直线模组上相机的同步
-BOOL *g_work = new BOOL[TOTAL_MACHINE * LINEMODULES_PER_MACHINE];				//模组工作标志位
-
-unsigned int  WINAPI threadProc(PVOID pParam);	//线程函数
+bool isCameraExist(unsigned int serialNumber, FlyCapture2::CameraInfo *pCamInfo,unsigned int arraySize);
 
 //*********************** 安装钩子函数，用于获取键盘消息 ***********************//
 HHOOK g_kb_hook;
@@ -41,51 +38,7 @@ LRESULT CALLBACK kb_proc (int code, WPARAM wParam, LPARAM lParam)
 
 void _tmain(int argc, _TCHAR* argv[])
 {
-	//BusManager busM;
-
-	///*bool pOk;
-	//
-	//unsigned int pSize;
-	//FlyCapture2::CameraSelectionDlg dlg;
-	//dlg.ShowModal(&pOk,&pGuid,&pSize);*/
-
-	//FlyCapture2::PGRGuid pGuid;
-	//unsigned int pNumCameras = 0;
-	//busM.GetNumOfCameras (&pNumCameras);
-
-	//busM.GetCameraFromIndex(0,&pGuid);
-
-
-	//FlyCapture2::Camera cam;
-
-	//
-	//FlyCapture2::Error err = cam.Connect(&pGuid);
-
-	//CString str;
-	////str.Format(_T("%s"),err.GetDescription())
-
-	//cam.StartCapture();
-
-	//FlyCapture2::Image m_rawImage, m_processedImage;
-
-	//cv::namedWindow("image",1);
-	//for(;;)
-	//{
-	//	cam.RetrieveBuffer(&m_rawImage);
-
-	//	unsigned int rows,cols,stride;
-	//	PixelFormat format;
-	//	m_rawImage.GetDimensions( &rows, &cols, &stride, &format );
-
-	//	m_rawImage.Convert( PIXEL_FORMAT_RGB8, &m_processedImage );
-
-	//	cv::Mat img(rows,cols,CV_8UC3,m_processedImage.GetData());
-	//	cv::imshow("image",img);
-	//	//cv::imwrite("image.jpg",img);
-	//	cv::waitKey(30);
-	//}
 	g_kb_hook = SetWindowsHookEx (WH_KEYBOARD_LL,kb_proc,GetModuleHandle(NULL),0);
-
 	if (g_kb_hook == NULL )
 	{
 		printf("安装钩子出错\n");
@@ -95,42 +48,138 @@ void _tmain(int argc, _TCHAR* argv[])
 	//if(_tcscmp(argv[1], _T("huayuTest")) != 0)	return;
 
 	//*********************** 参数定义 ***********************//
-	int mechaineID[TOTAL_MACHINE] = {0};
-	bool bOKmechine[TOTAL_MACHINE] = {false};
-
+	
 
 	//*********************** 初始化系统 ***********************//
 	//						  相机连接确认						//
 
+	//						   常用变量							//
+	
+	int totalMachine = 0;
+	unsigned int totalCam;
+	std::vector<int> vecOKMachineID, vecNotOKMachineID;
+	CDbase db;
+	
+	CString strSQL;
+
+	db.connectDB();
+
+	//获取机台总数
 	{
-		BusManager busManager;
-		unsigned int numOfCameras;
-		FlyCapture2::Error e;
-		e = busManager.GetNumOfCameras(&numOfCameras);
-		if (e != PGRERROR_OK)	return;
+		_RecordsetPtr pRecordset;
+		strSQL = _T("select count(*) as totalMachine from machineInfoTable");
+		pRecordset = db.readBySet(strSQL);
+		if ( pRecordset->GetRecordCount() == -1)
+			return;
+		totalMachine = (int)pRecordset->GetCollect((_variant_t)(_T("totalMachine")));
+		g_pEventHandle = new HANDLE[totalMachine * LINEMODULES_PER_MACHINE];
+		g_work = new BOOL[totalMachine * LINEMODULES_PER_MACHINE];
 
-		if ( numOfCameras < TOTAL_MACHINE * LINEMODULES_PER_MACHINE * CAMERAS_PER_LINEARMODULE)
+		pRecordset->Close();
+		pRecordset = NULL;
+		
+		//获取相机总数
+		CBusManager bus;
+		int e;
+		e = bus.GetNumOfCameras(&totalCam);
+		if (e != BUS_0K)	return;
+	}
+
+	//检测机台是否工作正常
+	if ( totalCam < totalMachine  * LINEMODULES_PER_MACHINE * CAMERAS_PER_LINEARMODULE)
+	{
+		//某些机台出故障，检测出故障机台
+		int *pMachaineID = NULL;
+		bool *pbOKmachine = NULL;
+		FlyCapture2::CameraInfo CamInfo ;
+		unsigned int arrySize;
+		pbOKmachine = new bool[totalMachine];
+			
+		//获取所有连接相机的信息
+		CBusManager::DiscoverAllCameras(&CamInfo,&arrySize);
+
+		//先获取所有机台编号
+		_RecordsetPtr pRecordsetMachine;
+		strSQL = _T("select machineID from machineInfoTable");
+		pRecordsetMachine = db.readBySet(strSQL);
+		//遍历机台
+		if (!pRecordsetMachine->adoEOF)
 		{
-			CString errorInfo(_T("系统检测到某些机台相机缺失，是否按现有设备启动其他正常机台？"));
-			int nResponse = ::MessageBox(NULL,errorInfo,_T("提醒"),MB_OKCANCEL|MB_ICONQUESTION);
+			int index = 0;
+			pRecordsetMachine->MoveFirst();
 
-			if (nResponse == IDCANCEL)
+			while(!pRecordsetMachine->adoEOF)
 			{
-				return;
+				_RecordsetPtr pRecordsetCam;
+
+				// 初始为true
+				pbOKmachine[index] = true;
+
+				//根据机台编号查找对应相机
+				pMachaineID[index] = (int)pRecordsetMachine->GetCollect(_T("machineID"));
+				strSQL.Format(_T("select cameraID from machineInfoTable where machineID =  %d"),pMachaineID[index]);
+				pRecordsetCam = db.readBySet(strSQL);
+				if (!pRecordsetCam->adoEOF)
+				{
+					pRecordsetCam->MoveFirst();
+					while(!pRecordsetCam->adoEOF)
+					{
+						unsigned int serialNumber;
+						bool exist;
+							
+						serialNumber= (unsigned int)pRecordsetCam->GetCollect(_T("cameraID"));
+						exist = isCameraExist(serialNumber,&CamInfo,arrySize);
+						pbOKmachine[index] = pbOKmachine[index] & exist;
+
+						pRecordsetCam->MoveNext();
+					}
+
+					pRecordsetCam->Close();
+					pRecordsetCam = NULL;
+				}
+				index++;
+				pRecordsetMachine->MoveNext();
 			}
 		}
 
-		// 建立可启动机台数组
 
+		pRecordsetMachine->Close();
+		pRecordsetMachine = NULL;
+
+		// 建立可启动机台编号数组，并输出相关信息
+		for (int i = 0; i < totalMachine; ++i)
+		{
+			if (pbOKmachine[i] == true)
+			{
+				vecOKMachineID.push_back(pMachaineID[i]);
+			}
+			else
+			{
+				vecNotOKMachineID.push_back(pMachaineID[i]);
+			}
+			delete []pMachaineID;
+			delete []pbOKmachine;
+
+			CString strNotOK = _T("");
+			for (std::vector<int>::iterator it = vecNotOKMachineID.begin(); it != vecNotOKMachineID.end(); it++)
+			{
+				CString strTemp;
+				strTemp.Format(_T("%d,"),*it);
+				strNotOK =strNotOK + strTemp;
+			}
+			strNotOK = _T("编号为：") + strNotOK + _T("的机台某些相机不能正常工作，是否启动其他正常机台？");
+			INT_PTR nResponse = ::MessageBox(NULL,strNotOK,_T("请注意"),MB_OKCANCEL|MB_ICONQUESTION);
+			if (nResponse == IDCANCEL)
+				return;
+		}
 	}
-
-
-
 
 	//						  IO模块连接确认						//
 	/*
 	 //add code here
 	*/
+
+
 	
 	//*********************** 建立通信服务 ***********************//
 
@@ -150,15 +199,13 @@ void _tmain(int argc, _TCHAR* argv[])
 
 	//*********************** 创建工作者线程 ***********************//
 
-	int totalThread = TOTAL_MACHINE * LINEMODULES_PER_MACHINE * CAMERAS_PER_LINEARMODULE ;
-	int totalLinearModule = TOTAL_MACHINE * LINEMODULES_PER_MACHINE;
-
+	int totalThread = vecOKMachineID.size();
+	int totalLinearModule = 1;
 	HANDLE *pThreadHandle = new HANDLE[totalThread];		//工作者线程句柄
 	
-	for(int i = 0; i < TOTAL_MACHINE; ++i)
+	for(int i = 0; i < totalThread; ++i)
 	{
-		for(int j = 0; j < )
-		pThreadHandle[i] = (HANDLE)_beginthreadex(NULL,0,threadProc,NULL,CREATE_SUSPENDED,NULL);
+		pThreadHandle[i] = (HANDLE)_beginthreadex(NULL,0,threadProc,&vecOKMachineID[i],CREATE_SUSPENDED,NULL);
 	}
 
 	//*********************** 消息循环 ***********************//
@@ -217,7 +264,21 @@ void _tmain(int argc, _TCHAR* argv[])
 	}
 	for (int i = 0; i < totalLinearModule; ++i)
 	{
-		CloseHandle(pEventHandle[i]);
+		CloseHandle(g_pEventHandle[i]);
 	}
 
+	//释放内存
+
+
+}
+
+
+bool isCameraExist(unsigned int serialNumber, FlyCapture2::CameraInfo *pCamInfo,unsigned int arraySize)
+{
+	for (int i = 0; i < arraySize; ++i)
+	{
+		if (serialNumber == pCamInfo[i].serialNumber) return true;
+	}
+
+	return false;
 }
