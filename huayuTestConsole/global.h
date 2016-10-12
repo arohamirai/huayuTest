@@ -8,14 +8,17 @@
 
 
 
-struct _tagSTARTINFO
+typedef struct _tagHYSTARTINFO
 {
-	int Machine ID;
+	int MachineID;		//机台标识
+	int moduleID;		//模组标识
+	int index;			//线程索引标识
 
-};
+} HYSTARTINFO,*pHYSTARTINFO;
 
 
 
 
-unsigned int  WINAPI threadProc(PVOID pParam);	//线程函数
+unsigned int  WINAPI mainThreadProc(PVOID pParam);	//机台主线程函数
 
+unsigned int  WINAPI threadProc(PVOID pParam);	//机台次线程函数

@@ -2,12 +2,12 @@
 
 CDbase::CDbase()
 {
-
+	CoInitialize(NULL);
 }
 
 CDbase::~CDbase()
 {
-
+	CoUninitialize();
 }
 
 _ConnectionPtr CDbase::connectDB(CString strConn)

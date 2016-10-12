@@ -24,13 +24,7 @@
     <ClCompile Include="ExceptionThread.cpp">
       <Filter>inport</Filter>
     </ClCompile>
-    <ClCompile Include="global.cpp">
-      <Filter>inport</Filter>
-    </ClCompile>
     <ClCompile Include="IoControler.cpp">
-      <Filter>inport</Filter>
-    </ClCompile>
-    <ClCompile Include="ProcessThread.cpp">
       <Filter>inport</Filter>
     </ClCompile>
     <ClCompile Include="AnsicUnicode.cpp">
@@ -54,15 +48,18 @@
     <ClCompile Include="BusManager.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ProcessThread.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="global.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ExceptionThread.h">
       <Filter>inport</Filter>
     </ClInclude>
     <ClInclude Include="IoControler.h">
-      <Filter>inport</Filter>
-    </ClInclude>
-    <ClInclude Include="ProcessThread.h">
       <Filter>inport</Filter>
     </ClInclude>
     <ClInclude Include="AnsicUnicode.h">
@@ -87,6 +84,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="BusManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcessThread.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

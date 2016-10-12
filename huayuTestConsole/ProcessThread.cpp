@@ -1,14 +1,29 @@
 #include "ProcessThread.h"
 
 
-CProcessThread::CProcessThread(DWORD dwThreadid)
+CProcessThread::CProcessThread()
 {
-	m_dwThreadid = dwThreadid;
+
 }
 
 
 CProcessThread::~CProcessThread(void)
 {
+}
+
+
+int CProcessThread::InitInstance()
+{
+	//******************** 数据库连接 *********************//
+
+	m_db.connectDB();
+	//iocard连接
+
+	//预置点信息生成
+
+	//相机参数设置
+
+	return TRUE;
 }
 
 
@@ -28,9 +43,9 @@ int CProcessThread::run(void)
 }
 
 
-int CProcessThread::createThread(PVOID Param, int initFlag)
+int CProcessThread::createThread(PVOID Param, unsigned int initFlag)
 {
-	CProcessThread * pProcessThread = (CProcessThread*)Param;
+	CProcessThread *pProcessThread = (CProcessThread*)Param;
 	pProcessThread->m_hThread = (HANDLE)_beginthreadex(NULL,0,CProcessThread::ThreadstaticEntry,Param,CREATE_SUSPENDED,&pProcessThread->m_ThreadId);
 	return 0;
 }

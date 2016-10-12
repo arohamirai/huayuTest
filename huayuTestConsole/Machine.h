@@ -7,7 +7,7 @@
 
 
 #define LINEMODULES_PER_MACHINE		2
-#define	CAMERAS_PER_LINEARMODULE	2
+#define	CAMERAS_PER_LINEARMODULE	1
 
 class CMachine
 {

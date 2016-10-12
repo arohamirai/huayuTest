@@ -119,7 +119,7 @@ void _tmain(int argc, _TCHAR* argv[])
 				pMachaineID[index] = (int)pRecordsetMachine->GetCollect(_T("machineID"));
 				strSQL.Format(_T("select cameraID from machineInfoTable where machineID =  %d"),pMachaineID[index]);
 				pRecordsetCam = db.readBySet(strSQL);
-				if (!pRecordsetCam->adoEOF)
+				if (!pRecordsetCam && !pRecordsetCam->adoEOF)
 				{
 					pRecordsetCam->MoveFirst();
 					while(!pRecordsetCam->adoEOF)
@@ -180,7 +180,47 @@ void _tmain(int argc, _TCHAR* argv[])
 	*/
 
 
+	//*********************** 创建工作者线程 ***********************//
+
+	int totalOKMachine = vecOKMachineID.size();
+	int totalLinearModule = 1;
+	HANDLE *pThreadHandle = new HANDLE[totalOKMachine];		//工作者线程句柄
+	bool flag = false;
 	
+	for(int i = 0; i < totalOKMachine; ++i)
+	{
+		while(!flag)	{};
+
+		_RecordsetPtr pRecordsetCam = NULL;
+		CString strSQL;
+		int cameraID0,cameraID1;
+
+		strSQL.Format( _T("select cameraID from machineInfoTable where machineID = %d"),vecOKMachineID[i]);
+		pRecordsetCam = db.readBySet(strSQL);
+		if(!pRecordsetCam && !pRecordsetCam->adoEOF)
+		{
+			MessageBox(NULL,_T("查询机台相机信息失败！"),_T("错误"),MB_OKCANCEL);
+			return;
+		}
+		pRecordsetCam->MoveFirst();
+		cameraID0 = pRecordsetCam->GetCollect(_T("cameraID")).intVal;
+		pRecordsetCam->MoveNext();
+		cameraID1 = pRecordsetCam->GetCollect(_T("cameraID")).intVal;
+
+		CProcessThread *pProcessThread0,*pProcessThread1;
+		pProcessThread0 = new CProcessThread();
+		pProcessThread1 = new CProcessThread();
+
+	
+		pProcessThread0->createThread(pProcessThread0,NULL);
+		pProcessThread1->createThread(pProcessThread1,NULL);
+
+		if (!pProcessThread0->InitInstance() && !pProcessThread1->InitInstance())
+		{
+			return;
+		}
+	}
+
 	//*********************** 建立通信服务 ***********************//
 
 	CMyServer server;
@@ -197,16 +237,6 @@ void _tmain(int argc, _TCHAR* argv[])
 		return;
 	}
 
-	//*********************** 创建工作者线程 ***********************//
-
-	int totalThread = vecOKMachineID.size();
-	int totalLinearModule = 1;
-	HANDLE *pThreadHandle = new HANDLE[totalThread];		//工作者线程句柄
-	
-	for(int i = 0; i < totalThread; ++i)
-	{
-		pThreadHandle[i] = (HANDLE)_beginthreadex(NULL,0,threadProc,&vecOKMachineID[i],CREATE_SUSPENDED,NULL);
-	}
 
 	//*********************** 消息循环 ***********************//
 	BOOL bQuit = FALSE;
@@ -258,16 +288,17 @@ void _tmain(int argc, _TCHAR* argv[])
 
 
 	// 释放线程句柄及事件句柄
-	for (int i = 0; i < totalThread; ++i)
+	/*for (int i = 0; i < totalThread; ++i)
 	{
 		CloseHandle(pThreadHandle[i]);
 	}
 	for (int i = 0; i < totalLinearModule; ++i)
 	{
 		CloseHandle(g_pEventHandle[i]);
-	}
+	}*/
 
-	//释放内存
+	//断开数据库连接
+	db.disConnectDB();
 
 
 }
